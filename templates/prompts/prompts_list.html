@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Prompts - TesisAI Gen{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="promptsModal()">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 class="text-2xl lg:text-3xl font-bold text-slate-800 dark:text-slate-100">Gestión de Prompts</h1>
+        <button @click="abrirModal()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm transition-colors">
+            <i class="fas fa-plus"></i>
+            <span>Nuevo Prompt</span>
+        </button>
+    </div>
+
+    <div
+        class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-slate-50 dark:bg-slate-700/50">
+                    <tr>
+                        <th
+                            class="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                            Título</th>
+                        <th
+                            class="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                            Tipo</th>
+                        <th
+                            class="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                            Variables</th>
+                        <th
+                            class="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                            Estado</th>
+                        <th
+                            class="px-6 py-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                            Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    {% for prompt in prompts %}
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="px-6 py-4 font-medium text-slate-800 dark:text-slate-100">{{ prompt.titulo }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{{
+                            prompt.get_tipo_documento_display }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{{
+                            prompt.variables_requeridas|join:", "|default:"—" }}</td>
+                        <td class="px-6 py-4">
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium {% if prompt.activo %}bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300{% else %}bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400{% endif %}">
+                                {{ prompt.activo|yesno:"Activo,Inactivo" }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button @click="editar({{ prompt.pk }})"
+                                class="p-2 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                                title="Editar">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <a href="{% url 'prompt_delete' prompt.pk %}"
+                                class="p-2 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors inline-block"
+                                title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                            No hay prompts. <button @click="abrirModal()"
+                                class="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium">Crear
+                                uno</button>.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Configurar Prompt -->
+    <div x-show="modalOpen" x-cloak x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+        @keydown.escape.window="cerrarModal()">
+        <div @click.outside="cerrarModal()"
+            class="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+                <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-100"
+                    x-text="editId ? 'Editar Prompt' : 'Configurar Prompt'"></h2>
+                <button @click="cerrarModal()"
+                    class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form @submit.prevent="guardar()" class="flex-1 overflow-y-auto p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Nombre del
+                        Prompt</label>
+                    <input type="text" x-model="form.titulo" required class="input-modern px-4 py-2.5"
+                        placeholder="Ej: Tesis Derecho Civil">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Tipo de
+                        Documento</label>
+                    <select x-model="form.tipo_documento" class="input-modern px-4 py-2.5">
+                        <option value="tesis_completa">Tesis Completa</option>
+                        <option value="resumen_intro">Solo Resumen/Intro</option>
+                        <option value="marco_teorico">Marco Teórico</option>
+                        <option value="articulo">Artículo Científico</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Descripción
+                        breve</label>
+                    <input type="text" x-model="form.descripcion" class="input-modern px-4 py-2.5"
+                        placeholder="Ej: Genera el esqueleto y contenido base para todos los capítulos.">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Instrucciones
+                        para la IA</label>
+                    <textarea x-model="form.contenido" rows="6" class="input-modern px-4 py-2.5 min-h-[150px]"
+                        placeholder="Actúa como un experto investigador académico. El tema de investigación es: {% templatetag openvariable %}tema{% templatetag closevariable %}..."></textarea>
+                    <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1"><i
+                            class="fas fa-info-circle"></i> Usa <code
+                            class="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded text-blue-600 dark:text-blue-400 font-mono">{% templatetag openvariable %}variable{% templatetag closevariable %}</code>
+                        para insertar valores dinámicos.</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Variables
+                        requeridas (JSON)</label>
+                    <input type="text" x-model="form.variables_json" class="input-modern px-4 py-2.5 font-mono text-sm"
+                        placeholder='["tema", "objetivos", "poblacion", "variable_independiente", "objetivo_general"]'>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Estas variables generarán automáticamente
+                        los campos en el Paso 3 "Detalles". Usa los mismos nombres en las instrucciones con {%
+                        templatetag openvariable %}{% templatetag openvariable %}variable{% templatetag closevariable
+                        %}{% templatetag closevariable %}.</p>
+                    <p x-show="variablesError" x-text="variablesError"
+                        class="mt-1 text-xs text-rose-600 dark:text-rose-400"></p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" x-model="form.activo" id="modal_activo"
+                        class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                    <label for="modal_activo"
+                        class="text-sm font-medium text-slate-700 dark:text-slate-300">Activo</label>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" x-model="form.recomendado" id="modal_recomendado"
+                        class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                    <label for="modal_recomendado"
+                        class="text-sm font-medium text-slate-700 dark:text-slate-300">Recomendado</label>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <button type="button" @click="cerrarModal()"
+                        class="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                        Guardar Prompt
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    [x-cloak] {
+        display: none !important
+    }
+</style>
+<script>
+    function promptsModal() {
+        const csrf = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+        const apiUrl = '{% url "api_prompts" %}';
+        return {
+            modalOpen: false,
+            editId: null,
+            form: {
+                titulo: '',
+                tipo_documento: 'tesis_completa',
+                contenido: '',
+                descripcion: '',
+                variables_json: '["tema", "objetivos", "poblacion"]',
+                activo: true,
+                recomendado: false
+            },
+            variablesError: '',
+            abrirModal() {
+                this.editId = null;
+                this.variablesError = '';
+                this.form = { titulo: '', tipo_documento: 'tesis_completa', contenido: '', descripcion: '', variables_json: '["tema", "objetivos", "poblacion", "objetivo_general"]', activo: true, recomendado: false };
+                this.modalOpen = true;
+            },
+            cerrarModal() { this.modalOpen = false; },
+            async editar(id) {
+                const res = await fetch(`${apiUrl}${id}/`);
+                const d = await res.json();
+                this.editId = id;
+                this.form = {
+                    titulo: d.titulo,
+                    tipo_documento: d.tipo_documento || 'tesis_completa',
+                    contenido: d.contenido,
+                    descripcion: d.descripcion || '',
+                    variables_json: JSON.stringify(d.variables_requeridas || [], null, 2),
+                    activo: d.activo,
+                    recomendado: d.recomendado || false
+                };
+                this.modalOpen = true;
+            },
+            async guardar() {
+                this.variablesError = '';
+                let variables = [];
+                try {
+                    variables = JSON.parse(this.form.variables_json || '[]');
+                    if (!Array.isArray(variables)) { this.variablesError = 'Debe ser un array JSON, ej: ["tema","objetivos"]'; return; }
+                } catch (_) {
+                    this.variablesError = 'JSON inválido. Use formato: ["tema", "objetivos", "poblacion"]';
+                    return;
+                }
+                const payload = {
+                    titulo: this.form.titulo,
+                    tipo_documento: this.form.tipo_documento,
+                    contenido: this.form.contenido,
+                    descripcion: this.form.descripcion,
+                    variables_requeridas: variables,
+                    activo: this.form.activo,
+                    recomendado: this.form.recomendado
+                };
+                const url = this.editId ? `${apiUrl}${this.editId}/` : apiUrl;
+                const method = this.editId ? 'PUT' : 'POST';
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    this.cerrarModal();
+                    window.location.reload();
+                } else {
+                    const err = await res.json();
+                    alert('Error: ' + (err.errors ? JSON.stringify(err.errors) : err.error || 'Unknown'));
+                }
+            }
+        };
+    }
+</script>
+{% endblock %}

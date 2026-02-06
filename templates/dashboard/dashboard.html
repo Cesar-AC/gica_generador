@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Principal - TesisAI Gen{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl lg:text-3xl font-bold text-slate-800 dark:text-slate-100">Panel Principal</h1>
+            <p class="mt-1 text-slate-500 dark:text-slate-400">Bienvenido de nuevo. Aquí están tus últimas generaciones.
+            </p>
+        </div>
+        <a href="{% url 'wizard_generacion' %}"
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm transition-colors">
+            <i class="fas fa-pen-to-square"></i>
+            <span>Generar Nuevo</span>
+        </a>
+    </div>
+
+    {% if not proyectos %}
+    <div
+        class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6 lg:p-8">
+        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">¿Cómo empezar?</h2>
+        <p class="text-slate-600 dark:text-slate-400 mb-4">Siga estos pasos para generar su primer documento con IA:</p>
+        <ol class="space-y-3 mb-6">
+            <li class="flex gap-3"><span
+                    class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-sm flex items-center justify-center font-medium">1</span>
+                <span><strong>Nuevo Proyecto</strong> → Elija el formato institucional (universidad/carrera)</span></li>
+            <li class="flex gap-3"><span
+                    class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-sm flex items-center justify-center font-medium">2</span>
+                <span><strong>Tipo & Prompt</strong> → Seleccione qué debe hacer la IA (ej: Estructura Completa)</span>
+            </li>
+            <li class="flex gap-3"><span
+                    class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-sm flex items-center justify-center font-medium">3</span>
+                <span><strong>Detalles</strong> → Complete las variables (tema, objetivos, etc.)</span></li>
+            <li class="flex gap-3"><span
+                    class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-sm flex items-center justify-center font-medium">4</span>
+                <span><strong>Generar</strong> → Los datos se envían a n8n para procesamiento por IA</span></li>
+        </ol>
+        <a href="{% url 'wizard_generacion' %}"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg transition-all">
+            <i class="fas fa-rocket"></i>
+            <span>Crear mi primer proyecto</span>
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Métricas -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
+        <div
+            class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:shadow-md transition-shadow border-b-4 border-b-blue-500">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                    <i class="fas fa-folder text-blue-600 dark:text-blue-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Proyectos Totales</p>
+                    <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ total_proyectos }}</p>
+                </div>
+            </div>
+        </div>
+        <div
+            class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:shadow-md transition-shadow border-b-4 border-b-emerald-500">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                    <i class="fas fa-clock text-emerald-600 dark:text-emerald-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Ahorro de Tiempo</p>
+                    <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">~{{ total_horas }}h</p>
+                </div>
+            </div>
+        </div>
+        <div
+            class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:shadow-md transition-shadow border-b-4 border-b-violet-500">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
+                    <i class="fas fa-microchip text-violet-600 dark:text-violet-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Tokens IA Usados</p>
+                    <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ total_tokens|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generaciones Recientes -->
+    <div
+        class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+            <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Generaciones Recientes</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-slate-50 dark:bg-slate-700/50">
+                    <tr>
+                        <th
+                            class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                            Título / Tema</th>
+                        <th
+                            class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                            Formato (Ext)</th>
+                        <th
+                            class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                            Estado</th>
+                        <th
+                            class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                            Fecha</th>
+                        <th
+                            class="px-6 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                            Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    {% for p in proyectos %}
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="px-6 py-4">
+                            <div>
+                                <p class="font-medium text-slate-800 dark:text-slate-100">{{ p.titulo|default:"Sin
+                                    título" }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ p.prompt_titulo }}</p>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-sm text-slate-600 dark:text-slate-300">{{
+                                p.formato_label|default:p.formato }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium
+                                {% if p.estado == 'completado' %}bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300
+                                {% elif p.estado == 'procesando' %}bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300
+                                {% elif p.estado == 'error' %}bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300
+                                {% else %}bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400{% endif %}">
+                                {% if p.estado == 'procesando' %}Procesando n8n...
+                                {% else %}{{ p.get_estado_display }}{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{{ p.creado_en|date:"d M, Y" }}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            {% if p.estado == 'completado' %}
+                            <button
+                                class="p-2 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                                title="Descargar">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            {% elif p.estado == 'procesando' %}
+                            <i class="fas fa-spinner fa-spin text-amber-500"></i>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center gap-2">
+                                <i class="fas fa-file-circle-plus text-4xl text-slate-300 dark:text-slate-600"></i>
+                                <p class="text-slate-500 dark:text-slate-400">No hay generaciones aún.</p>
+                                <a href="{% url 'wizard_generacion' %}"
+                                    class="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium inline-flex items-center gap-2">
+                                    <i class="fas fa-plus"></i> Crear proyecto
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

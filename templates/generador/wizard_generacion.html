@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Proyecto - TesisAI Gen{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto" x-data="wizardNuevoProyecto()">
+    <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">Nuevo Proyecto</h1>
+
+    <!-- Stepper -->
+    <div class="flex items-center gap-2 mb-8">
+        <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Paso <span x-text="paso"></span> de
+            4</span>
+        <div class="flex-1 flex items-center gap-2">
+            <div class="flex items-center gap-1">
+                <span
+                    class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors"
+                    :class="paso >= 1 ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'">1</span>
+                <span class="text-xs text-slate-500 hidden sm:inline">Formato</span>
+            </div>
+            <div class="flex-1 h-0.5" :class="paso >= 2 ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'"></div>
+            <div class="flex items-center gap-1">
+                <span
+                    class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors"
+                    :class="paso >= 2 ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'">2</span>
+                <span class="text-xs text-slate-500 hidden sm:inline">Prompt</span>
+            </div>
+            <div class="flex-1 h-0.5" :class="paso >= 3 ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'"></div>
+            <div class="flex items-center gap-1">
+                <span
+                    class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors"
+                    :class="paso >= 3 ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'">3</span>
+                <span class="text-xs text-slate-500 hidden sm:inline">Detalles</span>
+            </div>
+            <div class="flex-1 h-0.5" :class="paso >= 4 ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'"></div>
+            <div class="flex items-center gap-1">
+                <span class="w-8 h-8 rounded-full flex items-center justify-center text-sm transition-colors"
+                    :class="paso >= 4 ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'"><i
+                        class="fas fa-rocket text-xs"></i></span>
+                <span class="text-xs text-slate-500 hidden sm:inline">Generar</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paso 1: Formato -->
+    <div x-show="paso === 1" x-transition
+        class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 lg:p-8">
+        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">1. Selecciona el Formato Institucional
+        </h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Conectando con la Biblioteca de Formatos para obtener
+            las estructuras actualizadas.</p>
+        <form action="{% url 'sincronizar_formatos' %}" method="post" class="mb-6">
+            {% csrf_token %}
+            <button type="submit" class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400">Sincronizar
+                formatos</button>
+        </form>
+        <div class="grid sm:grid-cols-2 gap-4">
+            {% for f in formatos %}
+            <label class="cursor-pointer block">
+                <input type="radio" name="formato" value="{{ f.id_externo }}" class="peer sr-only" x-model="formatoId"
+                    @change="formatoLabel='{{ f.universidad }}{% if f.carrera %} - {{ f.carrera }}{% endif %}'">
+                <div
+                    class="p-4 rounded-xl border-2 transition-all duration-200 peer-checked:border-blue-500 peer-checked:ring-2 peer-checked:ring-blue-500/20 peer-checked:bg-blue-50/50 dark:peer-checked:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 h-full">
+                    <div class="flex gap-4 items-start">
+                        <div
+                            class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm {% cycle 'bg-gradient-to-br from-blue-500 to-blue-600' 'bg-gradient-to-br from-rose-500 to-rose-600' 'bg-gradient-to-br from-violet-500 to-violet-600' %}">
+                            {{ f.universidad|slice:":3"|upper }}
+                        </div>
+                        <div class="min-w-0">
+                            <p class="font-semibold text-slate-800 dark:text-slate-100 text-lg">{{ f.universidad }}</p>
+                            {% if f.carrera %}<p class="font-medium text-blue-600 dark:text-blue-400">{{ f.carrera }}
+                            </p>{% endif %}
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                <span
+                                    class="inline-flex items-center px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300">v{{
+                                    f.version|default:"1.0" }}</span>
+                                {% if f.incluye %}<span
+                                    class="inline-flex items-center px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-900/30 text-xs font-medium text-emerald-700 dark:text-emerald-300"><i
+                                        class="fas fa-check mr-1"></i>{{ f.incluye }}</span>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </label>
+            {% empty %}
+            <p class="col-span-2 text-slate-500 dark:text-slate-400 italic">No hay formatos sincronizados. Use el botón
+                superior.</p>
+            {% endfor %}
+        </div>
+        <div class="mt-8 flex justify-end">
+            <button @click="paso = 2" :disabled="!formatoId"
+                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-all shadow-md hover:shadow-lg disabled:shadow-none inline-flex items-center gap-2 transform active:scale-95">
+                Siguiente: Elegir Prompt <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Paso 2: Prompt -->
+    <div x-show="paso === 2" x-transition style="display: none;"
+        class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 lg:p-8">
+        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">2. ¿Qué quieres que haga la IA?</h2>
+        <p class="text-slate-500 dark:text-slate-400 mb-6">Selecciona el tipo de generación que necesitas.</p>
+        <div class="grid sm:grid-cols-3 gap-4">
+            {% for p in prompts %}
+            <label class="cursor-pointer block relative group">
+                <input type="radio" name="prompt" value="{{ p.pk }}" class="peer sr-only" x-model="promptId"
+                    data-vars="{{ p.variables_requeridas|join:',' }}">
+                <div
+                    class="p-5 rounded-xl border-2 transition-all duration-200 peer-checked:border-blue-500 peer-checked:ring-2 peer-checked:ring-blue-500/20 peer-checked:bg-blue-50/50 dark:peer-checked:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md border-slate-200 dark:border-slate-700 h-full flex flex-col items-center text-center">
+                    <div
+                        class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-sm transition-transform group-hover:scale-110 {% cycle 'bg-violet-100 dark:bg-violet-900/40' 'bg-emerald-100 dark:bg-emerald-900/40' 'bg-amber-100 dark:bg-amber-900/40' %}">
+                        <i
+                            class="fas {% cycle 'fa-book-open' 'fa-paragraph' 'fa-magnifying-glass' %} text-2xl {% cycle 'text-violet-600' 'text-emerald-600' 'text-amber-600' %} dark:{% cycle 'text-violet-400' 'text-emerald-400' 'text-amber-400' %}"></i>
+                    </div>
+                    <p class="font-bold text-slate-800 dark:text-slate-100 mb-2">{{ p.titulo }}</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{{ p.descripcion|default:"Sin
+                        descripción"|truncatewords:15 }}</p>
+                    {% if p.recomendado %}
+                    <div class="absolute top-3 right-3">
+                        <span class="flex h-3 w-3">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </label>
+            {% empty %}
+            <p class="col-span-3 text-slate-500 dark:text-slate-400 text-center py-8">No hay prompts disponibles. <a
+                    href="{% url 'prompts_list' %}" class="text-blue-600 font-medium hover:underline">Crear uno
+                    nuevo</a>.</p>
+            {% endfor %}
+        </div>
+        <div class="mt-8 flex justify-between">
+            <button @click="paso = 1"
+                class="px-6 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors">Atrás</button>
+            <button @click="paso = 3; updateVars()" :disabled="!promptId"
+                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-all shadow-md hover:shadow-lg disabled:shadow-none inline-flex items-center gap-2 transform active:scale-95">
+                Siguiente: Detalles <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Paso 3: Detalles -->
+    <div x-show="paso === 3" x-transition style="display: none;"
+        class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 lg:p-8">
+        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">3. Detalles del Proyecto</h2>
+        <p class="text-slate-500 dark:text-slate-400 mb-8">Completa la información necesaria. La calidad del resultado
+            depende de estos datos.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="variablesForm">
+            <template x-for="key in variableKeys" :key="key">
+                <div :class="isTextareaField(key) ? 'md:col-span-2' : ''">
+                    <label :for="'v_'+key" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
+                        x-text="variableLabel(key)"></label>
+
+                    <div class="relative">
+                        <input x-show="!isTextareaField(key)" type="text" :id="'v_'+key" x-model="variables[key]"
+                            class="input-modern px-4 py-3" :placeholder="variablePlaceholder(key)">
+
+                        <textarea x-show="isTextareaField(key)" :id="'v_'+key" x-model="variables[key]" rows="4"
+                            class="input-modern px-4 py-3 min-h-[100px]"
+                            :placeholder="variablePlaceholder(key)"></textarea>
+                    </div>
+                </div>
+            </template>
+            <div x-show="variableKeys.length === 0"
+                class="col-span-2 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-sm">
+                <i class="fas fa-info-circle mr-2"></i>El prompt seleccionado no tiene variables configuradas. Puede <a
+                    href="{% url 'prompts_list' %}" class="underline font-medium">editar el prompt</a> para añadir
+                variables en formato JSON, ej: <code
+                    class="bg-amber-100 dark:bg-amber-900/40 px-1 rounded">["tema","objetivos","poblacion"]</code>
+            </div>
+        </div>
+        <div
+            class="mt-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 flex gap-3">
+            <i class="fas fa-info-circle text-blue-500 mt-0.5 shrink-0"></i>
+            <p class="text-sm text-blue-800 dark:text-blue-200">
+                Estos datos se enviarán a <strong>n8n</strong>, que orquestará la llamada a los modelos de IA y
+                rellenará la estructura del formato <strong x-text="formatoLabel || 'seleccionado'"></strong>.
+            </p>
+        </div>
+        <div class="mt-6 flex justify-between">
+            <button @click="paso = 2"
+                class="px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors">Atrás</button>
+            <button @click="paso = 4"
+                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors inline-flex items-center gap-2">
+                Siguiente: Generar <i class="fas fa-arrow-right text-sm"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Paso 4: Generar -->
+    <div x-show="paso === 4" x-transition style="display: none;"
+        class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 lg:p-8">
+        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-6">4. Generar Documento</h2>
+        <p class="text-slate-600 dark:text-slate-400 mb-6">Revisa y confirma. Al hacer clic en Generar se enviará la
+            solicitud al sistema de IA.</p>
+        <div class="flex justify-between">
+            <button @click="paso = 3"
+                class="px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors">Atrás</button>
+            <button @click="generar()" :disabled="loading"
+                class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-70 text-white font-semibold rounded-xl shadow-lg transition-all">
+                <i class="fas fa-rocket" :class="loading && 'animate-pulse'"></i>
+                <span x-text="loading ? 'Generando...' : 'Generar Documento'"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Loader -->
+    <div x-show="loading" x-transition
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center" style="display: none;">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-xl flex flex-col items-center gap-4">
+            <div
+                class="w-16 h-16 rounded-full border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 animate-spin">
+            </div>
+            <p class="text-slate-700 dark:text-slate-300 font-medium">Procesando solicitud...</p>
+        </div>
+    </div>
+
+    <!-- Resultado -->
+    <div x-show="resultadoVisible" x-transition class="mt-6 rounded-xl border p-6"
+        :class="resultadoSuccess ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800'">
+        <div class="flex gap-3">
+            <i class="fas text-xl mt-0.5"
+                :class="resultadoSuccess ? 'fa-circle-check text-emerald-500' : 'fa-circle-xmark text-rose-500'"></i>
+            <div class="flex-1">
+                <p class="font-medium"
+                    :class="resultadoSuccess ? 'text-emerald-800 dark:text-emerald-200' : 'text-rose-800 dark:text-rose-200'"
+                    x-text="resultadoMensaje"></p>
+                <pre x-show="resultadoJson"
+                    class="mt-2 text-xs overflow-x-auto p-3 rounded-lg bg-white/50 dark:bg-slate-900/50"
+                    x-text="resultadoJson"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function wizardNuevoProyecto() {
+        const promptOpts = [
+            {% for p in prompts %}
+    { id: '{{ p.pk }}', vars: [{% for v in p.variables_requeridas %} "{{ v|escapejs }}"{% if not forloop.last %}, {% endif %} {% endfor %}] },
+    {% endfor %}
+    ];
+    const LABELS = { tema: 'Título Tentativo / Tema', objetivos: 'Objetivos', poblacion: 'Población / Objeto de Estudio', variable_independiente: 'Variable Independiente', objetivo_general: 'Objetivo General', autor: 'Autor', universidad: 'Universidad' };
+    const TEXTAREA_KEYS = ['objetivo_general', 'objetivos', 'resumen', 'descripcion', 'contenido'];
+    const PLACEHOLDERS = {
+        tema: 'Ej: Implementación de IA en procesos logísticos...',
+        poblacion: 'Ej: PyMEs del sector calzado',
+        variable_independiente: 'Ej: Automatización de procesos',
+        objetivo_general: 'Determinar la influencia de...',
+        objetivos: 'Ej: Analizar, evaluar, determinar...',
+        autor: 'Ej: Juan Pérez',
+        universidad: 'Ej: Universidad Nacional'
+    };
+    return {
+        paso: 1,
+        formatoId: '',
+        formatoLabel: '',
+        promptId: '',
+        variableKeys: [],
+        variables: {},
+        loading: false,
+        resultadoVisible: false,
+        resultadoSuccess: false,
+        resultadoMensaje: '',
+        resultadoJson: '',
+        variableLabel(key) {
+            return LABELS[key] || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        },
+        variablePlaceholder(key) {
+            return PLACEHOLDERS[key] || 'Ingrese valor para ' + key;
+        },
+        isTextareaField(key) {
+            return TEXTAREA_KEYS.some(k => key.toLowerCase().includes(k));
+        },
+        updateVars() {
+            const opt = promptOpts.find(o => o.id === String(this.promptId));
+            this.variableKeys = (opt && Array.isArray(opt.vars)) ? opt.vars.map(String) : [];
+            this.variables = {};
+            this.variableKeys.forEach(k => { this.variables[k] = ''; });
+        },
+        async generar() {
+            if (!this.formatoId || !this.promptId) return;
+            this.loading = true;
+            this.resultadoVisible = false;
+            const titulo = this.variables.tema || this.variables.titulo || '';
+            try {
+                const res = await fetch('{% url "api_generacion" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        prompt_id: parseInt(this.promptId),
+                        formato_id_externo: this.formatoId,
+                        variables: this.variables,
+                        titulo: titulo
+                    })
+                });
+                const data = await res.json();
+                this.resultadoVisible = true;
+                this.resultadoSuccess = !!data.success;
+                this.resultadoMensaje = data.success
+                    ? (data.data?.message || data.message || 'Envío aceptado. La solicitud fue recibida correctamente por n8n.')
+                    : ('Error: ' + (data.error || 'Desconocido'));
+                this.resultadoJson = JSON.stringify(data, null, 2);
+                if (data.success) setTimeout(() => window.location.href = '{% url "dashboard" %}', 2000);
+            } catch (err) {
+                this.resultadoVisible = true;
+                this.resultadoSuccess = false;
+                this.resultadoMensaje = 'Error de red: ' + err.message;
+                this.resultadoJson = '';
+            } finally {
+                this.loading = false;
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

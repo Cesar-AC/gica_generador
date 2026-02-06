@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar Prompt - GICA{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 lg:p-8">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center">
+                <i class="fas fa-trash text-rose-600 dark:text-rose-400"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100">¿Eliminar prompt?</h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Esta acción no se puede deshacer.</p>
+            </div>
+        </div>
+        <p class="text-slate-600 dark:text-slate-300 mb-6">
+            Se eliminará el prompt <strong class="text-slate-800 dark:text-slate-100">{{ object.titulo }}</strong>.
+        </p>
+        <form method="post" class="flex items-center justify-end gap-3">
+            {% csrf_token %}
+            <a href="{% url 'prompts_list' %}"
+               class="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium">
+                Cancelar
+            </a>
+            <button type="submit"
+                    class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-lg shadow-sm transition-colors">
+                <i class="fas fa-trash mr-2"></i>Sí, eliminar
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

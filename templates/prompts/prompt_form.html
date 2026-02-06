@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}{{ object|yesno:"Editar,Nuevo" }} Prompt - GICA{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="mb-6">
+        <h1 class="text-2xl lg:text-3xl font-bold text-slate-800 dark:text-slate-100">
+            {{ object|yesno:"Editar,Nuevo" }} Prompt
+        </h1>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Configure el contenido y las variables del prompt.</p>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 lg:p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label for="id_titulo" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Nombre del Prompt</label>
+                    <input type="text" name="titulo" id="id_titulo" value="{{ form.titulo.value|default:'' }}"
+                           class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                           placeholder="Ej: Tesis Derecho Civil" required>
+                    {% if form.titulo.errors %}<p class="mt-1 text-sm text-rose-600">{{ form.titulo.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label for="id_tipo_documento" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Tipo de Documento</label>
+                    <select name="tipo_documento" id="id_tipo_documento"
+                            class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 focus:ring-blue-500">
+                        {% for v, l in form.fields.tipo_documento.choices %}
+                        <option value="{{ v }}" {% if form.tipo_documento.value == v %}selected{% endif %}>{{ l }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="id_descripcion" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Descripción breve</label>
+                    <input type="text" name="descripcion" id="id_descripcion" value="{{ form.descripcion.value|default:'' }}"
+                           class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 focus:ring-blue-500"
+                           placeholder="Ej: Genera el esqueleto y contenido base...">
+                </div>
+                <div>
+                    <label for="id_contenido" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Instrucciones para la IA</label>
+                    <textarea name="contenido" id="id_contenido" rows="6"
+                              class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                              placeholder="Escriba el texto del prompt...">{{ form.contenido.value|default:'' }}</textarea>
+                    {% if form.contenido.errors %}<p class="mt-1 text-sm text-rose-600">{{ form.contenido.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label for="id_variables_texto" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Variables requeridas (JSON)</label>
+                    <textarea name="variables_texto" id="id_variables_texto" rows="2"
+                              class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 font-mono text-sm focus:ring-blue-500"
+                              placeholder='["tema", "objetivos", "poblacion"]'>{{ form.variables_texto.value|default:'' }}</textarea>
+                    <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        Estas variables generarán automáticamente los campos en el formulario del Paso 3. Usa {{variable}} en las instrucciones.
+                    </p>
+                    {% if form.variables_texto.errors %}<p class="mt-1 text-sm text-rose-600">{{ form.variables_texto.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-2">
+                        <input type="hidden" name="activo" value="False">
+                        <input type="checkbox" name="activo" id="id_activo" value="True" {% if form.activo.value %}checked{% endif %}
+                               class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                        <label for="id_activo" class="text-sm font-medium text-slate-700 dark:text-slate-300">Activo</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="hidden" name="recomendado" value="False">
+                        <input type="checkbox" name="recomendado" id="id_recomendado" value="True" {% if form.recomendado.value %}checked{% endif %}
+                               class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                        <label for="id_recomendado" class="text-sm font-medium text-slate-700 dark:text-slate-300">Recomendado</label>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <a href="{% url 'prompts_list' %}"
+                   class="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium">
+                    Cancelar
+                </a>
+                <button type="submit"
+                        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors">
+                    <i class="fas fa-check mr-2"></i>Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
